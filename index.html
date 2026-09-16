@@ -73,8 +73,8 @@
     <footer id="footer">Datenquelle: Tuya Cloud · Aktualisierung etwa alle 30 Minuten</footer>
   </main>
   <script>
-    const INDOOR_KEY = "room_temperature";
-    const OUTDOOR_KEY = "garden_soil_1";
+    const INDOOR_KEY = "garden_soil_1";
+    const OUTDOOR_KEY = "garden_soil_2";
     const COLORS = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)" };
     const valueWithUnit = (value, unit) => value == null ? "--" : `${Number(value).toFixed(1)} ${unit}`;
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
