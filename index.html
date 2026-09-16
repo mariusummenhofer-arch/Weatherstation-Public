@@ -18,6 +18,9 @@
     dl { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin: 0; }
     dt { color: #5c6d73; } dd { margin: 0; font-weight: 700; }
     .error { background: #f4d4d1; }
+    .sensor-status { margin: -.4rem 0 .75rem; font-size: .9rem; }
+    .sensor-status.ok { color: #28734d; }
+    .sensor-status.warning { color: #9a6516; }
   </style>
 </head>
 <body>
@@ -37,11 +40,13 @@
         const ageMinutes = (Date.now() - Date.parse(data.updated_at)) / 60000;
         document.querySelector("#updated").textContent = `Aktualisiert: ${new Date(data.updated_at).toLocaleString("de-DE")}`;
         const status = document.querySelector("#status");
-        status.textContent = ageMinutes > 60 ? `Warnung: Daten sind ${Math.round(ageMinutes)} Minuten alt.` : "Daten aktuell";
-        status.classList.toggle("warning", ageMinutes > 60);
+        const stale = ageMinutes > 60;
+        status.textContent = stale ? `Warnung: Daten sind ${Math.round(ageMinutes)} Minuten alt.` : `Gesamtstatus: ${data.status}`;
+        status.classList.toggle("warning", stale || data.status !== "ok");
         document.querySelector("#sensors").innerHTML = data.sensors.map(sensor => `
           <article>
             <h2>${sensor.name}</h2>
+            <p class="sensor-status ${sensor.status === "ok" ? "ok" : "warning"}">${sensor.status === "ok" ? "Messung erfolgreich" : `Status: ${sensor.status} (${sensor.error_code})`}</p>
             <dl>
               <dt>Temperatur</dt><dd>${format(sensor.temperature_c, "°C")}</dd>
               <dt>Luftfeuchtigkeit</dt><dd>${format(sensor.relative_humidity_percent, "%")}</dd>
