@@ -1,27 +1,29 @@
 {
   "schema_version": 2,
-  "measured_at": "2026-09-16T19:12:28Z",
-  "updated_at": "2026-09-16T19:12:28Z",
-  "status": "ok",
+  "measured_at": "2026-09-16T19:18:14Z",
+  "updated_at": "2026-09-16T19:18:14Z",
+  "status": "incomplete",
   "sensors": [
     {
       "key": "garden_soil_1",
       "name": "Bodensensor 1",
-      "status": "ok",
-      "error_code": null,
+      "status": "incomplete",
+      "error_code": "relative_humidity_unavailable",
       "temperature_c": 17.4,
-      "relative_humidity_percent": 33.0,
-      "dew_point_c": 0.9,
+      "relative_humidity_percent": null,
+      "dew_point_c": null,
+      "soil_moisture_percent": 33.0,
       "battery_percent": 100
     },
     {
       "key": "garden_soil_2",
       "name": "Bodensensor 2",
-      "status": "ok",
-      "error_code": null,
+      "status": "incomplete",
+      "error_code": "relative_humidity_unavailable",
       "temperature_c": 12.1,
-      "relative_humidity_percent": 6.0,
-      "dew_point_c": -24.5,
+      "relative_humidity_percent": null,
+      "dew_point_c": null,
+      "soil_moisture_percent": 6.0,
       "battery_percent": 100
     }
   ]

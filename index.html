@@ -93,7 +93,8 @@
     function renderPanel(sensor, label) {
       if (!sensor) return `<article class="panel"><p class="panel-label">${label}</p><h2>Kein Sensor</h2><p class="sensor-state warning">Nicht konfiguriert</p></article>`;
       const healthy = sensor.status === "ok";
-      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd><dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
+      const soilMoisture = sensor.soil_moisture_percent == null ? "" : `<dt>Bodenfeuchte</dt><dd>${valueWithUnit(sensor.soil_moisture_percent, "%")}</dd>`;
+      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
     }
     function drawChart(history) {
       const chart = document.querySelector("#chart");
