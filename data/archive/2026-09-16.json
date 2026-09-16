@@ -28,6 +28,35 @@
           "dew_point_c": 12.6
         }
       ]
+    },
+    {
+      "schema_version": 1,
+      "measured_at": "2026-09-16T18:54:46Z",
+      "updated_at": "2026-09-16T18:54:46Z",
+      "status": "ok",
+      "sensors": [
+        {
+          "name": "Bodensensor 1",
+          "temperature_c": 17.4,
+          "relative_humidity_percent": 56.0,
+          "battery_percent": 100,
+          "dew_point_c": 8.5
+        },
+        {
+          "name": "Bodensensor 2",
+          "temperature_c": 12.1,
+          "relative_humidity_percent": 6.0,
+          "battery_percent": 100,
+          "dew_point_c": -24.5
+        },
+        {
+          "name": "Temperatur Raum",
+          "temperature_c": 27.0,
+          "relative_humidity_percent": 41.0,
+          "battery_percent": 100,
+          "dew_point_c": 12.6
+        }
+      ]
     }
   ]
 }
