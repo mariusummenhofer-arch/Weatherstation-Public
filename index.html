@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wetterstation</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, sans-serif; background: #eef2f3; color: #173042; }
+    body { margin: 0; padding: 1rem; }
+    main { max-width: 38rem; margin: 0 auto; }
+    h1 { margin: 0 0 .25rem; font-size: 1.8rem; }
+    .updated { color: #5c6d73; margin: 0 0 1rem; }
+    .status { padding: .75rem 1rem; border-radius: .5rem; background: #d7eadf; }
+    .status.warning { background: #f6dfad; }
+    .sensors { display: grid; gap: .75rem; margin-top: 1rem; }
+    article { padding: 1rem; border-radius: .5rem; background: white; box-shadow: 0 .15rem .5rem #17304218; }
+    h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin: 0; }
+    dt { color: #5c6d73; } dd { margin: 0; font-weight: 700; }
+    .error { background: #f4d4d1; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Wetterstation</h1>
+    <p id="updated" class="updated">Lade Daten ...</p>
+    <div id="status" class="status">Verbindung wird hergestellt ...</div>
+    <section id="sensors" class="sensors" aria-live="polite"></section>
+  </main>
+  <script>
+    const format = (value, unit) => value == null ? "-" : `${Number(value).toFixed(1)} ${unit}`;
+    async function loadWeather() {
+      try {
+        const response = await fetch(`data/current.json?${Date.now()}`);
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const data = await response.json();
+        const ageMinutes = (Date.now() - Date.parse(data.updated_at)) / 60000;
+        document.querySelector("#updated").textContent = `Aktualisiert: ${new Date(data.updated_at).toLocaleString("de-DE")}`;
+        const status = document.querySelector("#status");
+        status.textContent = ageMinutes > 60 ? `Warnung: Daten sind ${Math.round(ageMinutes)} Minuten alt.` : "Daten aktuell";
+        status.classList.toggle("warning", ageMinutes > 60);
+        document.querySelector("#sensors").innerHTML = data.sensors.map(sensor => `
+          <article>
+            <h2>${sensor.name}</h2>
+            <dl>
+              <dt>Temperatur</dt><dd>${format(sensor.temperature_c, "°C")}</dd>
+              <dt>Luftfeuchtigkeit</dt><dd>${format(sensor.relative_humidity_percent, "%")}</dd>
+              <dt>Taupunkt</dt><dd>${format(sensor.dew_point_c, "°C")}</dd>
+              <dt>Batterie</dt><dd>${format(sensor.battery_percent, "%")}</dd>
+            </dl>
+          </article>`).join("");
+      } catch (error) {
+        const status = document.querySelector("#status");
+        status.className = "status error";
+        status.textContent = `Daten konnten nicht geladen werden: ${error.message}`;
+      }
+    }
+    loadWeather();
+  </script>
+</body>
+</html>
