@@ -3,64 +3,131 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Wetterstation</title>
+  <title>Lüftungsampel | Wetterstation</title>
   <style>
-    :root { color-scheme: light; font-family: system-ui, sans-serif; background: #eef2f3; color: #173042; }
-    body { margin: 0; padding: 1rem; }
-    main { max-width: 38rem; margin: 0 auto; }
-    h1 { margin: 0 0 .25rem; font-size: 1.8rem; }
-    .updated { color: #5c6d73; margin: 0 0 1rem; }
-    .status { padding: .75rem 1rem; border-radius: .5rem; background: #d7eadf; }
-    .status.warning { background: #f6dfad; }
-    .sensors { display: grid; gap: .75rem; margin-top: 1rem; }
-    article { padding: 1rem; border-radius: .5rem; background: white; box-shadow: 0 .15rem .5rem #17304218; }
-    h2 { margin: 0 0 .75rem; font-size: 1.1rem; }
-    dl { display: grid; grid-template-columns: 1fr auto; gap: .5rem; margin: 0; }
-    dt { color: #5c6d73; } dd { margin: 0; font-weight: 700; }
-    .error { background: #f4d4d1; }
-    .sensor-status { margin: -.4rem 0 .75rem; font-size: .9rem; }
-    .sensor-status.ok { color: #28734d; }
-    .sensor-status.warning { color: #9a6516; }
+    :root {
+      --background: #111923; --surface: #1a2531; --line: #314252;
+      --text: #edf2f2; --muted: #9cabb2; --green: #6db58b;
+      --amber: #d3a35a; --red: #c9786e; --status-color: var(--muted);
+      --serif: "Fraunces", Georgia, serif;
+      --mono: "IBM Plex Mono", "Cascadia Mono", Consolas, monospace;
+    }
+    * { box-sizing: border-box; }
+    body { min-width: 320px; margin: 0; color: var(--text); background: var(--background); font-family: var(--mono); }
+    main { width: min(100% - 2rem, 76rem); margin: 0 auto; padding: 2rem 0 3rem; }
+    header { display: flex; justify-content: space-between; gap: 1rem; align-items: end; margin-bottom: 1.5rem; }
+    h1, h2, p { margin-top: 0; }
+    h1, h2, .status-word { font-family: var(--serif); }
+    h1 { margin-bottom: .35rem; font-size: clamp(2rem, 5vw, 3.8rem); font-weight: 500; }
+    h2 { margin-bottom: 1rem; font-size: 1.45rem; font-weight: 500; }
+    .eyebrow { margin-bottom: .5rem; color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
+    .updated { margin-bottom: 0; color: var(--muted); font-size: .78rem; }
+    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem); gap: 1.5rem; align-items: center; margin-bottom: 1rem; padding: clamp(1.25rem, 4vw, 2.5rem); border: 1px solid var(--line); background: linear-gradient(135deg, #22313d, #18232e 70%); }
+    .hero-copy { display: flex; align-items: center; gap: 1.25rem; }
+    .signal { flex: 0 0 auto; width: clamp(4.5rem, 15vw, 7rem); aspect-ratio: 1; border-radius: 50%; background: var(--status-color); box-shadow: 0 0 0 .7rem color-mix(in srgb, var(--status-color) 14%, transparent), 0 0 3rem color-mix(in srgb, var(--status-color) 22%, transparent); }
+    .status-word { margin: 0; color: var(--status-color); font-size: clamp(2rem, 6vw, 4rem); line-height: 1; }
+    .status-detail { margin: .65rem 0 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
+    .delta { padding-left: 1.5rem; border-left: 1px solid var(--line); }
+    .delta-label { margin-bottom: .5rem; color: var(--muted); font-size: .72rem; text-transform: uppercase; }
+    .delta-value { margin: 0; font-size: clamp(2rem, 7vw, 4.2rem); line-height: 1; }
+    .notice { display: none; margin: 0 0 1rem; padding: .85rem 1rem; border-left: 3px solid var(--amber); color: #f1d39c; background: #362c20; font-size: .8rem; }
+    .notice.visible { display: block; }
+    .panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .panel, .chart-panel { border: 1px solid var(--line); background: var(--surface); }
+    .panel { padding: 1.25rem; }
+    .panel-label { margin-bottom: .35rem; color: var(--muted); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
+    .panel h2 { margin-bottom: 1.2rem; }
+    dl { display: grid; grid-template-columns: 1fr auto; gap: .8rem 1rem; margin: 0; }
+    dt { color: var(--muted); font-size: .8rem; }
+    dd { margin: 0; font-size: 1.05rem; font-weight: 600; }
+    .sensor-state { margin: 0 0 1rem; color: var(--green); font-size: .72rem; }
+    .sensor-state.warning { color: var(--amber); }
+    .chart-panel { margin-top: 1rem; padding: 1.25rem 1.25rem .9rem; }
+    .chart-header { display: flex; justify-content: space-between; gap: 1rem; align-items: baseline; }
+    .chart-header p { color: var(--muted); font-size: .72rem; }
+    svg { display: block; width: 100%; height: auto; overflow: visible; }
+    .chart-grid { stroke: var(--line); stroke-width: 1; }
+    .chart-axis { fill: var(--muted); font: 10px var(--mono); }
+    .line-in { fill: none; stroke: #e6c77f; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .line-out { fill: none; stroke: #80b7c5; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .legend { display: flex; gap: 1rem; margin-top: .6rem; color: var(--muted); font-size: .72rem; }
+    .legend span::before { display: inline-block; width: 1.5rem; height: 2px; margin: 0 .4rem .2rem 0; content: ""; background: currentColor; }
+    .legend .inside { color: #e6c77f; } .legend .outside { color: #80b7c5; }
+    footer { margin-top: 1.5rem; color: var(--muted); font-size: .7rem; }
+    @media (max-width: 620px) {
+      main { width: min(100% - 1rem, 38rem); padding-top: 1rem; }
+      header { display: block; } .updated { margin-top: .8rem; }
+      .hero { grid-template-columns: 1fr; gap: 1.4rem; }
+      .delta { padding: 1rem 0 0; border-top: 1px solid var(--line); border-left: 0; }
+      .panels { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
   <main>
-    <h1>Wetterstation</h1>
-    <p id="updated" class="updated">Lade Daten ...</p>
-    <div id="status" class="status">Verbindung wird hergestellt ...</div>
-    <section id="sensors" class="sensors" aria-live="polite"></section>
+    <header><div><p class="eyebrow">Private weather station / decision aid</p><h1>Lüftungsampel</h1></div><p id="updated" class="updated">Lade Messdaten ...</p></header>
+    <section class="hero" aria-live="polite"><div class="hero-copy"><div id="signal" class="signal" aria-hidden="true"></div><div><p id="status-word" class="status-word">Wird geladen</p><p id="status-detail" class="status-detail">Innen- und Außenwerte werden verglichen.</p></div></div><div class="delta"><p class="delta-label">Delta Taupunkt innen - außen</p><p id="delta-value" class="delta-value">--.- °C</p></div></section>
+    <p id="notice" class="notice"></p>
+    <section id="panels" class="panels" aria-live="polite"></section>
+    <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte innen und außen"></svg><div class="legend"><span class="inside">Innen</span><span class="outside">Außen</span></div></section>
+    <footer id="footer">Datenquelle: Tuya Cloud · Aktualisierung etwa alle 30 Minuten</footer>
   </main>
   <script>
-    const format = (value, unit) => value == null ? "-" : `${Number(value).toFixed(1)} ${unit}`;
-    async function loadWeather() {
-      try {
-        const response = await fetch(`data/current.json?${Date.now()}`);
-        if (!response.ok) throw new Error(`HTTP ${response.status}`);
-        const data = await response.json();
-        const ageMinutes = (Date.now() - Date.parse(data.updated_at)) / 60000;
-        document.querySelector("#updated").textContent = `Aktualisiert: ${new Date(data.updated_at).toLocaleString("de-DE")}`;
-        const status = document.querySelector("#status");
-        const stale = ageMinutes > 60;
-        status.textContent = stale ? `Warnung: Daten sind ${Math.round(ageMinutes)} Minuten alt.` : `Gesamtstatus: ${data.status}`;
-        status.classList.toggle("warning", stale || data.status !== "ok");
-        document.querySelector("#sensors").innerHTML = data.sensors.map(sensor => `
-          <article>
-            <h2>${sensor.name}</h2>
-            <p class="sensor-status ${sensor.status === "ok" ? "ok" : "warning"}">${sensor.status === "ok" ? "Messung erfolgreich" : `Status: ${sensor.status} (${sensor.error_code})`}</p>
-            <dl>
-              <dt>Temperatur</dt><dd>${format(sensor.temperature_c, "°C")}</dd>
-              <dt>Luftfeuchtigkeit</dt><dd>${format(sensor.relative_humidity_percent, "%")}</dd>
-              <dt>Taupunkt</dt><dd>${format(sensor.dew_point_c, "°C")}</dd>
-              <dt>Batterie</dt><dd>${format(sensor.battery_percent, "%")}</dd>
-            </dl>
-          </article>`).join("");
-      } catch (error) {
-        const status = document.querySelector("#status");
-        status.className = "status error";
-        status.textContent = `Daten konnten nicht geladen werden: ${error.message}`;
-      }
+    const INDOOR_KEY = "room_temperature";
+    const OUTDOOR_KEY = "garden_soil_1";
+    const COLORS = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)" };
+    const valueWithUnit = (value, unit) => value == null ? "--" : `${Number(value).toFixed(1)} ${unit}`;
+    const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
+    function evaluate(tpIn, tpOut) {
+      const delta = tpIn - tpOut;
+      if (delta >= 2) return { status: "green", word: "Jetzt lüften", detail: "Außenluft ist voraussichtlich trockener." };
+      if (delta > -2) return { status: "amber", word: "Kaum Effekt", detail: "Lüften verändert die Feuchte voraussichtlich wenig." };
+      return { status: "red", word: "Nicht lüften", detail: "Außenluft ist voraussichtlich feuchter." };
     }
-    loadWeather();
+    function setSignal(result, delta) {
+      document.documentElement.style.setProperty("--status-color", COLORS[result.status]);
+      document.querySelector("#status-word").textContent = result.word;
+      document.querySelector("#status-detail").textContent = result.detail;
+      document.querySelector("#delta-value").textContent = `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} °C`;
+    }
+    function renderPanel(sensor, label) {
+      if (!sensor) return `<article class="panel"><p class="panel-label">${label}</p><h2>Kein Sensor</h2><p class="sensor-state warning">Nicht konfiguriert</p></article>`;
+      const healthy = sensor.status === "ok";
+      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd><dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
+    }
+    function drawChart(history) {
+      const chart = document.querySelector("#chart");
+      const points = history.filter(point => Number.isFinite(point.tpIn) && Number.isFinite(point.tpOut));
+      if (points.length < 2) { chart.innerHTML = `<text x="380" y="125" text-anchor="middle" class="chart-axis">Noch nicht genug Messpunkte für einen Verlauf</text>`; return; }
+      const width = 760, height = 250, left = 42, right = 14, top = 18, bottom = 30;
+      const values = points.flatMap(point => [point.tpIn, point.tpOut]);
+      const min = Math.min(...values) - 1.5, max = Math.max(...values) + 1.5;
+      const x = index => left + index / (points.length - 1) * (width - left - right);
+      const y = value => top + (1 - (value - min) / (max - min || 1)) * (height - top - bottom);
+      const path = key => points.map((point, index) => `${index ? "L" : "M"} ${x(index).toFixed(1)} ${y(point[key]).toFixed(1)}`).join(" ");
+      const grid = [0, .25, .5, .75, 1].map(ratio => { const yPosition = top + ratio * (height - top - bottom); const value = max - ratio * (max - min); return `<line x1="${left}" y1="${yPosition}" x2="${width - right}" y2="${yPosition}" class="chart-grid"/><text x="${left - 8}" y="${yPosition + 4}" text-anchor="end" class="chart-axis">${value.toFixed(1)}°</text>`; }).join("");
+      chart.innerHTML = `${grid}<path d="${path("tpIn")}" class="line-in"/><path d="${path("tpOut")}" class="line-out"/>`;
+    }
+    async function loadWeather() {
+      const response = await fetch(`data/current.json?${Date.now()}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+      const current = await response.json();
+      const indoor = current.sensors.find(sensor => sensor.key === INDOOR_KEY);
+      const outdoor = current.sensors.find(sensor => sensor.key === OUTDOOR_KEY);
+      const ageMinutes = (Date.now() - Date.parse(current.updated_at)) / 60000;
+      document.querySelector("#updated").textContent = `Aktualisiert: ${new Date(current.updated_at).toLocaleString("de-DE")}`;
+      document.querySelector("#panels").innerHTML = `${renderPanel(indoor, "Innen")}${renderPanel(outdoor, "Außen")}`;
+      const notice = document.querySelector("#notice");
+      const validComparison = indoor?.status === "ok" && outdoor?.status === "ok" && indoor.dew_point_c != null && outdoor.dew_point_c != null;
+      if (validComparison) { setSignal(evaluate(indoor.dew_point_c, outdoor.dew_point_c), indoor.dew_point_c - outdoor.dew_point_c); notice.classList.remove("visible"); }
+      else { document.documentElement.style.setProperty("--status-color", COLORS.amber); document.querySelector("#status-word").textContent = "Keine Ampel"; document.querySelector("#status-detail").textContent = "Für den Vergleich fehlen gültige Innen- oder Außenwerte."; document.querySelector("#delta-value").textContent = "--.- °C"; notice.textContent = "Die Lüftungsempfehlung ist wegen fehlender oder fehlerhafter Messwerte nicht verfügbar."; notice.classList.add("visible"); }
+      if (ageMinutes > 60) { notice.textContent = `Die Daten sind ${Math.round(ageMinutes)} Minuten alt.`; notice.classList.add("visible"); }
+      const today = new Date(current.measured_at).toISOString().slice(0, 10);
+      let archive = { measurements: [] };
+      try { const archiveResponse = await fetch(`data/archive/${today}.json?${Date.now()}`); if (archiveResponse.ok) archive = await archiveResponse.json(); } catch (error) { /* current data remains useful without history */ }
+      drawChart(archive.measurements.map(measurement => ({ tpIn: measurement.sensors.find(sensor => sensor.key === INDOOR_KEY)?.dew_point_c, tpOut: measurement.sensors.find(sensor => sensor.key === OUTDOOR_KEY)?.dew_point_c })));
+    }
+    loadWeather().catch(error => { const notice = document.querySelector("#notice"); notice.textContent = `Messdaten konnten nicht geladen werden: ${error.message}`; notice.classList.add("visible"); });
   </script>
 </body>
 </html>
