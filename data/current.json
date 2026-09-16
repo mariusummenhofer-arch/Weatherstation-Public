@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "measured_at": "2026-09-16T20:41:59Z",
-  "updated_at": "2026-09-16T20:41:59Z",
+  "measured_at": "2026-09-16T21:14:06Z",
+  "updated_at": "2026-09-16T21:14:06Z",
   "status": "incomplete",
   "sensors": [
     {
@@ -20,7 +20,7 @@
       "name": "Bodensensor 2",
       "status": "incomplete",
       "error_code": "relative_humidity_unavailable",
-      "temperature_c": 11.7,
+      "temperature_c": 11.4,
       "relative_humidity_percent": null,
       "dew_point_c": null,
       "soil_moisture_percent": 6.0,
