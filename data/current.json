@@ -1,6 +1,6 @@
 {
-  "measured_at": "2026-09-16T18:09:23Z",
-  "updated_at": "2026-09-16T18:09:23Z",
+  "measured_at": "2026-09-16T18:15:49Z",
+  "updated_at": "2026-09-16T18:15:49Z",
   "status": "ok",
   "sensors": [
     {
@@ -12,10 +12,10 @@
     },
     {
       "name": "Bodensensor 2",
-      "temperature_c": 12.7,
+      "temperature_c": 12.4,
       "relative_humidity_percent": 6.0,
       "battery_percent": 100,
-      "dew_point_c": -24.1
+      "dew_point_c": -24.3
     },
     {
       "name": "Temperatur Raum",
