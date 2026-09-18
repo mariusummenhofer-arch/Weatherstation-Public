@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "measured_at": "2026-09-18T04:13:43Z",
-  "updated_at": "2026-09-18T04:13:43Z",
+  "measured_at": "2026-09-18T04:41:35Z",
+  "updated_at": "2026-09-18T04:41:35Z",
   "status": "incomplete",
   "sensors": [
     {
@@ -23,7 +23,7 @@
       "temperature_c": 6.8,
       "relative_humidity_percent": null,
       "dew_point_c": null,
-      "soil_moisture_percent": 6.0,
+      "soil_moisture_percent": 8.0,
       "battery_percent": 100
     }
   ]
