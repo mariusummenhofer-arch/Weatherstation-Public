@@ -1619,6 +1619,57 @@
           "outdoor_absolute_humidity_g_m3": 7.79
         }
       }
+    },
+    {
+      "schema_version": 3,
+      "measured_at": "2026-09-25T17:12:51Z",
+      "updated_at": "2026-09-25T17:12:51Z",
+      "status": "ok",
+      "sensors": [
+        {
+          "key": "indoor",
+          "name": "Innensensor",
+          "status": "ok",
+          "error_code": null,
+          "temperature_c": 19.0,
+          "relative_humidity_percent": 60.0,
+          "dew_point_c": 11.1,
+          "absolute_humidity_g_m3": 9.76,
+          "soil_moisture_percent": null,
+          "air_pressure_hpa": 954.8,
+          "battery_percent": null
+        },
+        {
+          "key": "garden_outdoor",
+          "name": "Außensensor (Kanal 1)",
+          "status": "ok",
+          "error_code": null,
+          "temperature_c": 16.3,
+          "relative_humidity_percent": 57.0,
+          "dew_point_c": 7.8,
+          "absolute_humidity_g_m3": 7.89,
+          "soil_moisture_percent": null,
+          "air_pressure_hpa": null,
+          "battery_percent": "0"
+        }
+      ],
+      "indicators": {
+        "mold_risk": {
+          "level": "green",
+          "wall_temperature_c": 18.2,
+          "insulation_factor": 0.3,
+          "indoor_dew_point_c": 11.1
+        },
+        "ventilation": {
+          "recommended": true,
+          "indoor_absolute_humidity_g_m3": 9.76,
+          "outdoor_absolute_humidity_g_m3": 7.89
+        },
+        "dry_air_warning": {
+          "active": false,
+          "outdoor_absolute_humidity_g_m3": 7.89
+        }
+      }
     }
   ]
 }
