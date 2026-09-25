@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
-  "measured_at": "2026-09-25T13:22:16Z",
-  "updated_at": "2026-09-25T13:22:16Z",
+  "measured_at": "2026-09-25T13:39:39Z",
+  "updated_at": "2026-09-25T13:39:39Z",
   "status": "ok",
   "sensors": [
     {
@@ -13,7 +13,7 @@
       "relative_humidity_percent": 66.0,
       "dew_point_c": 13.1,
       "soil_moisture_percent": null,
-      "air_pressure_hpa": 954.2,
+      "air_pressure_hpa": 954.1,
       "battery_percent": null
     },
     {
@@ -21,9 +21,9 @@
       "name": "Außensensor (Kanal 1)",
       "status": "ok",
       "error_code": null,
-      "temperature_c": 19.9,
+      "temperature_c": 20.2,
       "relative_humidity_percent": 44.0,
-      "dew_point_c": 7.3,
+      "dew_point_c": 7.5,
       "soil_moisture_percent": null,
       "air_pressure_hpa": null,
       "battery_percent": "0"
