@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Lüftungsampel | Wetterstation</title>
+  <title>Schimmel- & Lüftungsampel | Wetterstation</title>
   <style>
     :root {
       --background: #111923; --surface: #1a2531; --line: #314252;
@@ -65,9 +65,10 @@
 </head>
 <body>
   <main>
-    <header><div><p class="eyebrow">Private weather station / decision aid</p><h1>Lüftungsampel</h1></div><p id="updated" class="updated">Lade Messdaten ...</p></header>
-    <section class="hero" aria-live="polite"><div class="hero-copy"><div id="signal" class="signal" aria-hidden="true"></div><div><p id="status-word" class="status-word">Wird geladen</p><p id="status-detail" class="status-detail">Innen- und Außenwerte werden verglichen.</p></div></div><div class="delta"><p class="delta-label">Delta Taupunkt innen - außen</p><p id="delta-value" class="delta-value">--.- °C</p></div></section>
+    <header><div><p class="eyebrow">Private weather station / decision aid</p><h1>Schimmel-Ampel</h1></div><p id="updated" class="updated">Lade Messdaten ...</p></header>
+    <section class="hero" aria-live="polite"><div class="hero-copy"><div id="signal" class="signal" aria-hidden="true"></div><div><p id="status-word" class="status-word">Wird geladen</p><p id="status-detail" class="status-detail">Schimmelrisiko wird berechnet.</p></div></div><div class="delta"><p class="delta-label">Wandtemperatur − Taupunkt innen</p><p id="delta-value" class="delta-value">--.- °C</p></div></section>
     <p id="notice" class="notice"></p>
+    <section class="chart-panel" aria-live="polite"><div class="chart-header"><h2>Lüftungsempfehlung</h2><p>Basierend auf absoluter Feuchte</p></div><div id="ventilation"></div></section>
     <section id="panels" class="panels" aria-live="polite"></section>
     <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte innen und außen"></svg><div class="legend"><span class="inside">Innen</span><span class="outside">Außen</span></div></section>
     <footer id="footer">Datenquelle: Ecowitt Cloud · Aktualisierung etwa alle 30 Minuten</footer>
@@ -78,24 +79,40 @@
     const COLORS = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)" };
     const valueWithUnit = (value, unit) => value == null ? "--" : `${Number(value).toFixed(1)} ${unit}`;
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
-    function evaluate(tpIn, tpOut) {
-      const delta = tpIn - tpOut;
-      if (delta >= 2) return { status: "green", word: "Jetzt lüften", detail: "Außenluft ist voraussichtlich trockener." };
-      if (delta > -2) return { status: "amber", word: "Kaum Effekt", detail: "Lüften verändert die Feuchte voraussichtlich wenig." };
-      return { status: "red", word: "Nicht lüften", detail: "Außenluft ist voraussichtlich feuchter." };
+    const MOLD_LABELS = {
+      green: { word: "Sicher", detail: "Die geschätzte Wandoberfläche liegt deutlich über dem Taupunkt der Innenluft." },
+      amber: { word: "Schimmelgefahr", detail: "Die Wandoberfläche nähert sich dem Taupunkt der Innenluft (Risiko ab 80% rel. Feuchte an der Wand)." },
+      red: { word: "Kondensationsrisiko", detail: "Die geschätzte Wandoberfläche liegt auf oder unter dem Taupunkt der Innenluft." }
+    };
+    function setMoldSignal(level, wallTemperature, indoorDewPoint) {
+      const label = MOLD_LABELS[level] || { word: "Unbekannt", detail: "Kein gültiger Schimmel-Indikator verfügbar." };
+      document.documentElement.style.setProperty("--status-color", COLORS[level] || COLORS.amber);
+      document.querySelector("#status-word").textContent = label.word;
+      document.querySelector("#status-detail").textContent = label.detail;
+      const delta = wallTemperature != null && indoorDewPoint != null ? wallTemperature - indoorDewPoint : null;
+      document.querySelector("#delta-value").textContent = delta == null ? "--.- °C" : `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} °C`;
     }
-    function setSignal(result, delta) {
-      document.documentElement.style.setProperty("--status-color", COLORS[result.status]);
-      document.querySelector("#status-word").textContent = result.word;
-      document.querySelector("#status-detail").textContent = result.detail;
-      document.querySelector("#delta-value").textContent = `${delta >= 0 ? "+" : ""}${delta.toFixed(1)} °C`;
+    function renderVentilation(indicators) {
+      const ventilation = indicators?.ventilation;
+      const dryAir = indicators?.dry_air_warning;
+      if (!ventilation || ventilation.recommended == null) {
+        return `<p class="sensor-state warning">Keine Lüftungsempfehlung verfügbar (fehlende Innen- oder Außenwerte).</p>`;
+      }
+      const recommended = ventilation.recommended;
+      const word = recommended ? "Jetzt lüften" : "Nicht nötig";
+      const detail = recommended
+        ? "Die Außenluft enthält weniger Wasser pro m³ als die Innenluft."
+        : "Der Unterschied der absoluten Feuchte ist zu gering für einen spürbaren Effekt.";
+      const dryWarning = dryAir?.active ? `<p class="sensor-state warning">Trockenluft-Warnung: Außenluft ist sehr trocken (${valueWithUnit(dryAir.outdoor_absolute_humidity_g_m3, "g/m³")}). Lüftungsdauer begrenzen.</p>` : "";
+      return `<p class="sensor-state ${recommended ? "" : "warning"}">${word}</p><p class="status-detail">${detail}</p><dl><dt>Absolute Feuchte innen</dt><dd>${valueWithUnit(ventilation.indoor_absolute_humidity_g_m3, "g/m³")}</dd><dt>Absolute Feuchte außen</dt><dd>${valueWithUnit(ventilation.outdoor_absolute_humidity_g_m3, "g/m³")}</dd></dl>${dryWarning}`;
     }
     function renderPanel(sensor, label) {
       if (!sensor) return `<article class="panel"><p class="panel-label">${label}</p><h2>Kein Sensor</h2><p class="sensor-state warning">Nicht konfiguriert</p></article>`;
       const healthy = sensor.status === "ok";
       const soilMoisture = sensor.soil_moisture_percent == null ? "" : `<dt>Bodenfeuchte</dt><dd>${valueWithUnit(sensor.soil_moisture_percent, "%")}</dd>`;
       const airPressure = sensor.air_pressure_hpa == null ? "" : `<dt>Luftdruck</dt><dd>${valueWithUnit(sensor.air_pressure_hpa, "hPa")}</dd>`;
-      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}${airPressure}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
+      const absoluteHumidity = sensor.absolute_humidity_g_m3 == null ? "" : `<dt>Absolute Feuchte</dt><dd>${valueWithUnit(sensor.absolute_humidity_g_m3, "g/m³")}</dd>`;
+      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}${airPressure}${absoluteHumidity}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
     }
     function drawChart(history) {
       const chart = document.querySelector("#chart");
@@ -120,9 +137,14 @@
       document.querySelector("#updated").textContent = `Aktualisiert: ${new Date(current.updated_at).toLocaleString("de-DE")}`;
       document.querySelector("#panels").innerHTML = `${renderPanel(indoor, "Innen")}${renderPanel(outdoor, "Außen")}`;
       const notice = document.querySelector("#notice");
-      const validComparison = indoor?.status === "ok" && outdoor?.status === "ok" && indoor.dew_point_c != null && outdoor.dew_point_c != null;
-      if (validComparison) { setSignal(evaluate(indoor.dew_point_c, outdoor.dew_point_c), indoor.dew_point_c - outdoor.dew_point_c); notice.classList.remove("visible"); }
-      else { document.documentElement.style.setProperty("--status-color", COLORS.amber); document.querySelector("#status-word").textContent = "Keine Ampel"; document.querySelector("#status-detail").textContent = "Für den Vergleich fehlen gültige Innen- oder Außenwerte."; document.querySelector("#delta-value").textContent = "--.- °C"; notice.textContent = "Die Lüftungsempfehlung ist wegen fehlender oder fehlerhafter Messwerte nicht verfügbar."; notice.classList.add("visible"); }
+      const moldRisk = current.indicators?.mold_risk;
+      if (moldRisk && moldRisk.level) {
+        setMoldSignal(moldRisk.level, moldRisk.wall_temperature_c, moldRisk.indoor_dew_point_c);
+        notice.classList.remove("visible");
+      } else {
+        document.documentElement.style.setProperty("--status-color", COLORS.amber); document.querySelector("#status-word").textContent = "Keine Ampel"; document.querySelector("#status-detail").textContent = "Für die Schimmel-Ampel fehlen gültige Innen- oder Außenwerte."; document.querySelector("#delta-value").textContent = "--.- °C"; notice.textContent = "Die Schimmel-Ampel ist wegen fehlender oder fehlerhafter Messwerte nicht verfügbar."; notice.classList.add("visible");
+      }
+      document.querySelector("#ventilation").innerHTML = renderVentilation(current.indicators);
       if (ageMinutes > 60) { notice.textContent = `Die Daten sind ${Math.round(ageMinutes)} Minuten alt.`; notice.classList.add("visible"); }
       const today = new Date(current.measured_at).toISOString().slice(0, 10);
       let archive = { measurements: [] };
