@@ -70,11 +70,11 @@
     <p id="notice" class="notice"></p>
     <section id="panels" class="panels" aria-live="polite"></section>
     <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte innen und außen"></svg><div class="legend"><span class="inside">Innen</span><span class="outside">Außen</span></div></section>
-    <footer id="footer">Datenquelle: Tuya Cloud · Aktualisierung etwa alle 30 Minuten</footer>
+    <footer id="footer">Datenquelle: Ecowitt Cloud · Aktualisierung etwa alle 30 Minuten</footer>
   </main>
   <script>
-    const INDOOR_KEY = "garden_soil_1";
-    const OUTDOOR_KEY = "garden_soil_2";
+    const INDOOR_KEY = "indoor";
+    const OUTDOOR_KEY = "garden_outdoor";
     const COLORS = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)" };
     const valueWithUnit = (value, unit) => value == null ? "--" : `${Number(value).toFixed(1)} ${unit}`;
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
@@ -94,7 +94,8 @@
       if (!sensor) return `<article class="panel"><p class="panel-label">${label}</p><h2>Kein Sensor</h2><p class="sensor-state warning">Nicht konfiguriert</p></article>`;
       const healthy = sensor.status === "ok";
       const soilMoisture = sensor.soil_moisture_percent == null ? "" : `<dt>Bodenfeuchte</dt><dd>${valueWithUnit(sensor.soil_moisture_percent, "%")}</dd>`;
-      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
+      const airPressure = sensor.air_pressure_hpa == null ? "" : `<dt>Luftdruck</dt><dd>${valueWithUnit(sensor.air_pressure_hpa, "hPa")}</dd>`;
+      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}${airPressure}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
     }
     function drawChart(history) {
       const chart = document.querySelector("#chart");
