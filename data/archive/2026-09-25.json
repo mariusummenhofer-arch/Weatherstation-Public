@@ -690,6 +690,36 @@
           "battery_percent": null
         }
       ]
+    },
+    {
+      "schema_version": 2,
+      "measured_at": "2026-09-25T10:13:49Z",
+      "updated_at": "2026-09-25T10:13:49Z",
+      "status": "error",
+      "sensors": [
+        {
+          "key": "garden_soil_1",
+          "name": "Bodensensor 1",
+          "status": "error",
+          "error_code": "sensor_read_failed",
+          "temperature_c": null,
+          "relative_humidity_percent": null,
+          "dew_point_c": null,
+          "soil_moisture_percent": null,
+          "battery_percent": null
+        },
+        {
+          "key": "garden_soil_2",
+          "name": "Bodensensor 2",
+          "status": "error",
+          "error_code": "sensor_read_failed",
+          "temperature_c": null,
+          "relative_humidity_percent": null,
+          "dew_point_c": null,
+          "soil_moisture_percent": null,
+          "battery_percent": null
+        }
+      ]
     }
   ]
 }
