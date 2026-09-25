@@ -998,6 +998,25 @@
           "battery_percent": null
         }
       ]
+    },
+    {
+      "schema_version": 2,
+      "measured_at": "2026-09-25T12:17:31Z",
+      "updated_at": "2026-09-25T12:17:31Z",
+      "status": "incomplete",
+      "sensors": [
+        {
+          "key": "garden_device",
+          "name": "Ecowitt Gartenstation",
+          "status": "incomplete",
+          "error_code": "relative_humidity_unavailable",
+          "temperature_c": null,
+          "relative_humidity_percent": null,
+          "dew_point_c": null,
+          "soil_moisture_percent": null,
+          "battery_percent": null
+        }
+      ]
     }
   ]
 }
