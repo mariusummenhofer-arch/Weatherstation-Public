@@ -1,14 +1,25 @@
 {
   "schema_version": 2,
-  "measured_at": "2026-09-25T12:07:57Z",
-  "updated_at": "2026-09-25T12:07:57Z",
-  "status": "incomplete",
+  "measured_at": "2026-09-25T12:08:53Z",
+  "updated_at": "2026-09-25T12:08:53Z",
+  "status": "error",
   "sensors": [
     {
-      "key": "garden_device",
-      "name": "Ecowitt Gartenstation",
-      "status": "incomplete",
-      "error_code": "relative_humidity_unavailable",
+      "key": "garden_soil_1",
+      "name": "Bodensensor 1",
+      "status": "error",
+      "error_code": "sensor_read_failed",
+      "temperature_c": null,
+      "relative_humidity_percent": null,
+      "dew_point_c": null,
+      "soil_moisture_percent": null,
+      "battery_percent": null
+    },
+    {
+      "key": "garden_soil_2",
+      "name": "Bodensensor 2",
+      "status": "error",
+      "error_code": "sensor_read_failed",
       "temperature_c": null,
       "relative_humidity_percent": null,
       "dew_point_c": null,
