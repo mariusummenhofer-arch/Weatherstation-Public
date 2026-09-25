@@ -1074,6 +1074,36 @@
           "battery_percent": null
         }
       ]
+    },
+    {
+      "schema_version": 2,
+      "measured_at": "2026-09-25T13:10:01Z",
+      "updated_at": "2026-09-25T13:10:01Z",
+      "status": "ok",
+      "sensors": [
+        {
+          "key": "indoor",
+          "name": "Innensensor",
+          "status": "ok",
+          "error_code": null,
+          "temperature_c": 19.6,
+          "relative_humidity_percent": 66.0,
+          "dew_point_c": 13.1,
+          "soil_moisture_percent": null,
+          "battery_percent": null
+        },
+        {
+          "key": "garden_outdoor",
+          "name": "Außensensor (Kanal 1)",
+          "status": "ok",
+          "error_code": null,
+          "temperature_c": 19.6,
+          "relative_humidity_percent": 44.0,
+          "dew_point_c": 7.0,
+          "soil_moisture_percent": null,
+          "battery_percent": "0"
+        }
+      ]
     }
   ]
 }
