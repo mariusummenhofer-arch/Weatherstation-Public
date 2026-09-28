@@ -99,11 +99,11 @@
         return `<p class="sensor-state warning">Keine Lüftungsempfehlung verfügbar (fehlende Innen- oder Außenwerte).</p>`;
       }
       const recommended = ventilation.recommended;
-      const word = recommended ? "Jetzt lüften" : "Nicht nötig";
+      const word = recommended ? "Guter Moment zum Lüften" : "Lüften bringt aktuell wenig";
       const detail = recommended
-        ? "Die Außenluft enthält weniger Wasser pro m³ als die Innenluft."
-        : "Der Unterschied der absoluten Feuchte ist zu gering für einen spürbaren Effekt.";
-      const dryWarning = dryAir?.active ? `<p class="sensor-state warning">Trockenluft-Warnung: Außenluft ist sehr trocken (${valueWithUnit(dryAir.outdoor_absolute_humidity_g_m3, "g/m³")}). Lüftungsdauer begrenzen.</p>` : "";
+        ? "Die Außenluft ist trockener als drinnen – jetzt 5–10 Minuten stoßlüften senkt die Luftfeuchtigkeit spürbar."
+        : "Innen- und Außenluft enthalten ähnlich viel Feuchtigkeit. Fenster geschlossen lassen und später erneut prüfen.";
+      const dryWarning = dryAir?.active ? `<p class="sensor-state warning">Außenluft ist sehr trocken (${valueWithUnit(dryAir.outdoor_absolute_humidity_g_m3, "g/m³")}) – nur kurz lüften (ca. 5 Minuten), sonst wird die Raumluft zu trocken.</p>` : "";
       return `<p class="sensor-state ${recommended ? "" : "warning"}">${word}</p><p class="status-detail">${detail}</p><dl><dt>Absolute Feuchte innen</dt><dd>${valueWithUnit(ventilation.indoor_absolute_humidity_g_m3, "g/m³")}</dd><dt>Absolute Feuchte außen</dt><dd>${valueWithUnit(ventilation.outdoor_absolute_humidity_g_m3, "g/m³")}</dd></dl>${dryWarning}`;
     }
     function renderPanel(sensor, label) {
