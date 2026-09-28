@@ -32,7 +32,7 @@
     .delta-value { margin: 0; font-size: clamp(2rem, 7vw, 4.2rem); line-height: 1; }
     .notice { display: none; margin: 0 0 1rem; padding: .85rem 1rem; border-left: 3px solid var(--amber); color: #f1d39c; background: #362c20; font-size: .8rem; }
     .notice.visible { display: block; }
-    .panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+    .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
     .panel, .chart-panel { border: 1px solid var(--line); background: var(--surface); }
     .panel { padding: 1.25rem; }
     .panel-label { margin-bottom: .35rem; color: var(--muted); font-size: .7rem; letter-spacing: .1em; text-transform: uppercase; }
@@ -48,11 +48,12 @@
     svg { display: block; width: 100%; height: auto; overflow: visible; }
     .chart-grid { stroke: var(--line); stroke-width: 1; }
     .chart-axis { fill: var(--muted); font: 10px var(--mono); }
-    .line-in { fill: none; stroke: #e6c77f; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-    .line-out { fill: none; stroke: #80b7c5; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
-    .legend { display: flex; gap: 1rem; margin-top: .6rem; color: var(--muted); font-size: .72rem; }
+    .chart-line { fill: none; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+    .legend { display: flex; flex-wrap: wrap; gap: 1rem; margin-top: .6rem; color: var(--muted); font-size: .72rem; }
     .legend span::before { display: inline-block; width: 1.5rem; height: 2px; margin: 0 .4rem .2rem 0; content: ""; background: currentColor; }
-    .legend .inside { color: #e6c77f; } .legend .outside { color: #80b7c5; }
+    .sensor-select { display: flex; flex-wrap: wrap; gap: .5rem 1.1rem; margin-bottom: .8rem; }
+    .sensor-toggle { display: inline-flex; align-items: center; gap: .4rem; color: var(--muted); font-size: .78rem; cursor: pointer; }
+    .sensor-toggle input { accent-color: var(--green); }
     footer { margin-top: 1.5rem; color: var(--muted); font-size: .7rem; }
     @media (max-width: 620px) {
       main { width: min(100% - 1rem, 38rem); padding-top: 1rem; }
@@ -70,13 +71,16 @@
     <p id="notice" class="notice"></p>
     <section class="chart-panel" aria-live="polite"><div class="chart-header"><h2>Lüftungsempfehlung</h2><p>Basierend auf absoluter Feuchte</p></div><div id="ventilation"></div></section>
     <section id="panels" class="panels" aria-live="polite"></section>
-    <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte innen und außen"></svg><div class="legend"><span class="inside">Innen</span><span class="outside">Außen</span></div></section>
+    <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><div id="chart-sensor-select" class="sensor-select"></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte ausgewählter Sensoren"></svg><div id="legend" class="legend"></div></section>
     <footer id="footer">Datenquelle: Ecowitt Cloud · Aktualisierung etwa alle 30 Minuten</footer>
   </main>
   <script>
-    const INDOOR_KEY = "indoor";
-    const OUTDOOR_KEY = "garden_outdoor";
+    const ROLE_LABELS = { indoor: "Innen", outdoor: "Außen", room: "Raum" };
+    const CHART_PALETTE = ["#e6c77f", "#80b7c5", "#a5d6a7", "#f28b82", "#c792ea", "#90caf9"];
     const COLORS = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)" };
+    let selectedChartKeys = new Set();
+    let lastArchiveMeasurements = [];
+    let lastSensorNameByKey = {};
     const valueWithUnit = (value, unit) => value == null ? "--" : `${Number(value).toFixed(1)} ${unit}`;
     const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;", "'": "&#039;" }[char]));
     const MOLD_LABELS = {
@@ -114,35 +118,50 @@
       const absoluteHumidity = sensor.absolute_humidity_g_m3 == null ? "" : `<dt>Absolute Feuchte</dt><dd>${valueWithUnit(sensor.absolute_humidity_g_m3, "g/m³")}</dd>`;
       return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}${airPressure}${absoluteHumidity}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
     }
-    function drawChart(history) {
+    function renderSensorSelect(sensors) {
+      document.querySelector("#chart-sensor-select").innerHTML = sensors.map(sensor => `<label class="sensor-toggle"><input type="checkbox" value="${escapeHtml(sensor.key)}" ${selectedChartKeys.has(sensor.key) ? "checked" : ""} onchange="toggleChartSensor(this)">${escapeHtml(sensor.name)}</label>`).join("");
+    }
+    function toggleChartSensor(checkbox) {
+      if (checkbox.checked) selectedChartKeys.add(checkbox.value); else selectedChartKeys.delete(checkbox.value);
+      drawChart(lastArchiveMeasurements, [...selectedChartKeys], lastSensorNameByKey);
+    }
+    function drawChart(measurements, selectedKeys, sensorNameByKey) {
       const chart = document.querySelector("#chart");
-      const points = history.filter(point => Number.isFinite(point.tpIn) && Number.isFinite(point.tpOut));
-      if (points.length < 2) { chart.innerHTML = `<text x="380" y="125" text-anchor="middle" class="chart-axis">Noch nicht genug Messpunkte für einen Verlauf</text>`; return; }
+      const legend = document.querySelector("#legend");
+      const series = selectedKeys.map((key, index) => ({
+        key,
+        name: sensorNameByKey[key] || key,
+        color: CHART_PALETTE[index % CHART_PALETTE.length],
+        points: measurements.map(measurement => ({ time: measurement.measured_at, value: measurement.sensors.find(sensor => sensor.key === key)?.dew_point_c })).filter(point => Number.isFinite(point.value))
+      })).filter(entry => entry.points.length >= 2);
+      if (series.length === 0) { chart.innerHTML = `<text x="380" y="125" text-anchor="middle" class="chart-axis">Noch nicht genug Messpunkte für einen Verlauf</text>`; legend.innerHTML = ""; return; }
       const width = 760, height = 250, left = 42, right = 14, top = 18, bottom = 34;
-      const values = points.flatMap(point => [point.tpIn, point.tpOut]);
+      const values = series.flatMap(entry => entry.points.map(point => point.value));
       const min = Math.min(...values) - 1.5, max = Math.max(...values) + 1.5;
-      const x = index => left + index / (points.length - 1) * (width - left - right);
+      const x = (points, index) => left + index / (points.length - 1) * (width - left - right);
       const y = value => top + (1 - (value - min) / (max - min || 1)) * (height - top - bottom);
-      const path = key => points.map((point, index) => `${index ? "L" : "M"} ${x(index).toFixed(1)} ${y(point[key]).toFixed(1)}`).join(" ");
       const grid = [0, .25, .5, .75, 1].map(ratio => { const yPosition = top + ratio * (height - top - bottom); const value = max - ratio * (max - min); return `<line x1="${left}" y1="${yPosition}" x2="${width - right}" y2="${yPosition}" class="chart-grid"/><text x="${left - 8}" y="${yPosition + 4}" text-anchor="end" class="chart-axis">${value.toFixed(1)}°</text>`; }).join("");
-      const maxTimeTicks = Math.min(6, points.length);
-      const tickStep = (points.length - 1) / (maxTimeTicks - 1 || 1);
+      const timeReference = series.reduce((longest, entry) => entry.points.length > longest.length ? entry.points : longest, series[0].points);
+      const maxTimeTicks = Math.min(6, timeReference.length);
+      const tickStep = (timeReference.length - 1) / (maxTimeTicks - 1 || 1);
       const tickIndices = [...new Set(Array.from({ length: maxTimeTicks }, (_, tick) => Math.round(tick * tickStep)))];
       const timeAxis = tickIndices.map(index => {
-        const label = points[index].time ? new Date(points[index].time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "";
-        return `<text x="${x(index).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="chart-axis">${label}</text>`;
+        const label = timeReference[index]?.time ? new Date(timeReference[index].time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "";
+        return `<text x="${x(timeReference, index).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="chart-axis">${label}</text>`;
       }).join("");
-      chart.innerHTML = `${grid}${timeAxis}<path d="${path("tpIn")}" class="line-in"/><path d="${path("tpOut")}" class="line-out"/>`;
+      const paths = series.map(entry => `<path d="${entry.points.map((point, index) => `${index ? "L" : "M"} ${x(entry.points, index).toFixed(1)} ${y(point.value).toFixed(1)}`).join(" ")}" class="chart-line" style="stroke:${entry.color}"/>`).join("");
+      chart.innerHTML = `${grid}${timeAxis}${paths}`;
+      legend.innerHTML = series.map(entry => `<span style="color:${entry.color}">${escapeHtml(entry.name)}</span>`).join("");
     }
     async function loadWeather() {
       const response = await fetch(`data/current.json?${Date.now()}`);
       if (!response.ok) throw new Error(`HTTP ${response.status}`);
       const current = await response.json();
-      const indoor = current.sensors.find(sensor => sensor.key === INDOOR_KEY);
-      const outdoor = current.sensors.find(sensor => sensor.key === OUTDOOR_KEY);
+      const indoor = current.sensors.find(sensor => sensor.role === "indoor");
+      const outdoor = current.sensors.find(sensor => sensor.role === "outdoor");
       const ageMinutes = (Date.now() - Date.parse(current.updated_at)) / 60000;
       document.querySelector("#updated").textContent = `Aktualisiert: ${new Date(current.updated_at).toLocaleString("de-DE")}`;
-      document.querySelector("#panels").innerHTML = `${renderPanel(indoor, "Innen")}${renderPanel(outdoor, "Außen")}`;
+      document.querySelector("#panels").innerHTML = current.sensors.map(sensor => renderPanel(sensor, ROLE_LABELS[sensor.role] || "Sensor")).join("");
       const notice = document.querySelector("#notice");
       const moldRisk = current.indicators?.mold_risk;
       if (moldRisk && moldRisk.level) {
@@ -156,7 +175,11 @@
       const today = new Date(current.measured_at).toISOString().slice(0, 10);
       let archive = { measurements: [] };
       try { const archiveResponse = await fetch(`data/archive/${today}.json?${Date.now()}`); if (archiveResponse.ok) archive = await archiveResponse.json(); } catch (error) { /* current data remains useful without history */ }
-      drawChart(archive.measurements.map(measurement => ({ time: measurement.measured_at, tpIn: measurement.sensors.find(sensor => sensor.key === INDOOR_KEY)?.dew_point_c, tpOut: measurement.sensors.find(sensor => sensor.key === OUTDOOR_KEY)?.dew_point_c })));
+      if (selectedChartKeys.size === 0) [indoor?.key, outdoor?.key].filter(Boolean).forEach(key => selectedChartKeys.add(key));
+      lastArchiveMeasurements = archive.measurements;
+      lastSensorNameByKey = Object.fromEntries(current.sensors.map(sensor => [sensor.key, sensor.name]));
+      renderSensorSelect(current.sensors);
+      drawChart(lastArchiveMeasurements, [...selectedChartKeys], lastSensorNameByKey);
     }
     loadWeather().catch(error => { const notice = document.querySelector("#notice"); notice.textContent = `Messdaten konnten nicht geladen werden: ${error.message}`; notice.classList.add("visible"); });
   </script>
