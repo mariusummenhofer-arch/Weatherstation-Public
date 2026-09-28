@@ -118,14 +118,21 @@
       const chart = document.querySelector("#chart");
       const points = history.filter(point => Number.isFinite(point.tpIn) && Number.isFinite(point.tpOut));
       if (points.length < 2) { chart.innerHTML = `<text x="380" y="125" text-anchor="middle" class="chart-axis">Noch nicht genug Messpunkte für einen Verlauf</text>`; return; }
-      const width = 760, height = 250, left = 42, right = 14, top = 18, bottom = 30;
+      const width = 760, height = 250, left = 42, right = 14, top = 18, bottom = 34;
       const values = points.flatMap(point => [point.tpIn, point.tpOut]);
       const min = Math.min(...values) - 1.5, max = Math.max(...values) + 1.5;
       const x = index => left + index / (points.length - 1) * (width - left - right);
       const y = value => top + (1 - (value - min) / (max - min || 1)) * (height - top - bottom);
       const path = key => points.map((point, index) => `${index ? "L" : "M"} ${x(index).toFixed(1)} ${y(point[key]).toFixed(1)}`).join(" ");
       const grid = [0, .25, .5, .75, 1].map(ratio => { const yPosition = top + ratio * (height - top - bottom); const value = max - ratio * (max - min); return `<line x1="${left}" y1="${yPosition}" x2="${width - right}" y2="${yPosition}" class="chart-grid"/><text x="${left - 8}" y="${yPosition + 4}" text-anchor="end" class="chart-axis">${value.toFixed(1)}°</text>`; }).join("");
-      chart.innerHTML = `${grid}<path d="${path("tpIn")}" class="line-in"/><path d="${path("tpOut")}" class="line-out"/>`;
+      const maxTimeTicks = Math.min(6, points.length);
+      const tickStep = (points.length - 1) / (maxTimeTicks - 1 || 1);
+      const tickIndices = [...new Set(Array.from({ length: maxTimeTicks }, (_, tick) => Math.round(tick * tickStep)))];
+      const timeAxis = tickIndices.map(index => {
+        const label = points[index].time ? new Date(points[index].time).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : "";
+        return `<text x="${x(index).toFixed(1)}" y="${height - 8}" text-anchor="middle" class="chart-axis">${label}</text>`;
+      }).join("");
+      chart.innerHTML = `${grid}${timeAxis}<path d="${path("tpIn")}" class="line-in"/><path d="${path("tpOut")}" class="line-out"/>`;
     }
     async function loadWeather() {
       const response = await fetch(`data/current.json?${Date.now()}`);
@@ -149,7 +156,7 @@
       const today = new Date(current.measured_at).toISOString().slice(0, 10);
       let archive = { measurements: [] };
       try { const archiveResponse = await fetch(`data/archive/${today}.json?${Date.now()}`); if (archiveResponse.ok) archive = await archiveResponse.json(); } catch (error) { /* current data remains useful without history */ }
-      drawChart(archive.measurements.map(measurement => ({ tpIn: measurement.sensors.find(sensor => sensor.key === INDOOR_KEY)?.dew_point_c, tpOut: measurement.sensors.find(sensor => sensor.key === OUTDOOR_KEY)?.dew_point_c })));
+      drawChart(archive.measurements.map(measurement => ({ time: measurement.measured_at, tpIn: measurement.sensors.find(sensor => sensor.key === INDOOR_KEY)?.dew_point_c, tpOut: measurement.sensors.find(sensor => sensor.key === OUTDOOR_KEY)?.dew_point_c })));
     }
     loadWeather().catch(error => { const notice = document.querySelector("#notice"); notice.textContent = `Messdaten konnten nicht geladen werden: ${error.message}`; notice.classList.add("visible"); });
   </script>
