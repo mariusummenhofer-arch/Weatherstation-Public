@@ -1,7 +1,7 @@
 {
   "schema_version": 4,
-  "measured_at": "2026-09-30T03:14:55Z",
-  "updated_at": "2026-09-30T03:14:55Z",
+  "measured_at": "2026-09-30T04:15:15Z",
+  "updated_at": "2026-09-30T04:15:15Z",
   "status": "ok",
   "sensors": [
     {
@@ -10,12 +10,12 @@
       "role": "indoor",
       "status": "ok",
       "error_code": null,
-      "temperature_c": 19.3,
+      "temperature_c": 19.2,
       "relative_humidity_percent": 67.0,
-      "dew_point_c": 13.0,
-      "absolute_humidity_g_m3": 11.09,
+      "dew_point_c": 12.9,
+      "absolute_humidity_g_m3": 11.02,
       "soil_moisture_percent": null,
-      "air_pressure_hpa": 955.1,
+      "air_pressure_hpa": 955.5,
       "battery_percent": null
     },
     {
@@ -24,10 +24,10 @@
       "role": "outdoor",
       "status": "ok",
       "error_code": null,
-      "temperature_c": 11.0,
-      "relative_humidity_percent": 84.0,
+      "temperature_c": 10.6,
+      "relative_humidity_percent": 86.0,
       "dew_point_c": 8.4,
-      "absolute_humidity_g_m3": 8.39,
+      "absolute_humidity_g_m3": 8.38,
       "soil_moisture_percent": null,
       "air_pressure_hpa": null,
       "battery_percent": "0"
@@ -36,18 +36,18 @@
   "indicators": {
     "mold_risk": {
       "level": "green",
-      "wall_temperature_c": 16.8,
+      "wall_temperature_c": 16.6,
       "insulation_factor": 0.3,
-      "indoor_dew_point_c": 13.0
+      "indoor_dew_point_c": 12.9
     },
     "ventilation": {
       "recommended": true,
-      "indoor_absolute_humidity_g_m3": 11.09,
-      "outdoor_absolute_humidity_g_m3": 8.39
+      "indoor_absolute_humidity_g_m3": 11.02,
+      "outdoor_absolute_humidity_g_m3": 8.38
     },
     "dry_air_warning": {
       "active": false,
-      "outdoor_absolute_humidity_g_m3": 8.39
+      "outdoor_absolute_humidity_g_m3": 8.38
     }
   }
 }
