@@ -22,14 +22,32 @@
     h2 { margin-bottom: 1rem; font-size: 1.45rem; font-weight: 500; }
     .eyebrow { margin-bottom: .5rem; color: var(--muted); font-size: .72rem; letter-spacing: .12em; text-transform: uppercase; }
     .updated { margin-bottom: 0; color: var(--muted); font-size: .78rem; }
-    .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(12rem, 18rem); gap: 1.5rem; align-items: center; margin-bottom: 1rem; padding: clamp(1.25rem, 4vw, 2.5rem); border: 1px solid var(--line); background: linear-gradient(135deg, #22313d, #18232e 70%); }
-    .hero-copy { display: flex; align-items: center; gap: 1.25rem; }
-    .signal { flex: 0 0 auto; width: clamp(4.5rem, 15vw, 7rem); aspect-ratio: 1; border-radius: 50%; background: var(--status-color); box-shadow: 0 0 0 .7rem color-mix(in srgb, var(--status-color) 14%, transparent), 0 0 3rem color-mix(in srgb, var(--status-color) 22%, transparent); }
-    .status-word { margin: 0; color: var(--status-color); font-size: clamp(2rem, 6vw, 4rem); line-height: 1; }
-    .status-detail { margin: .65rem 0 0; color: var(--muted); font-size: .82rem; line-height: 1.5; }
-    .delta { padding-left: 1.5rem; border-left: 1px solid var(--line); }
-    .delta-label { margin-bottom: .5rem; color: var(--muted); font-size: .72rem; text-transform: uppercase; }
-    .delta-value { margin: 0; font-size: clamp(2rem, 7vw, 4.2rem); line-height: 1; }
+    .overview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(15rem, 20rem); gap: 1rem; margin-bottom: 1rem; }
+    .ventilation-card, .hero { min-width: 0; border: 1px solid var(--line); background: var(--surface); }
+    .ventilation-card { padding: clamp(1.25rem, 3vw, 1.75rem); background: linear-gradient(135deg, #22313d, #18232e 70%); }
+    .ventilation-heading { display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; }
+    .ventilation-heading h2 { margin-bottom: .35rem; }
+    .ventilation-heading > p { margin: .25rem 0 0; color: var(--muted); font-size: .72rem; text-align: right; }
+    .ventilation-state { display: flex; align-items: center; gap: .65rem; margin: .75rem 0 1.25rem; color: var(--green); font-family: var(--serif); font-size: clamp(1.35rem, 3vw, 1.8rem); }
+    .ventilation-state.warning { color: var(--amber); }
+    .ventilation-state::before { flex: 0 0 auto; width: .8rem; height: .8rem; border-radius: 50%; content: ""; background: currentColor; box-shadow: 0 0 0 .3rem color-mix(in srgb, currentColor 16%, transparent); }
+    .ventilation-detail { margin: 0 0 1.2rem; color: var(--muted); font-size: .8rem; line-height: 1.5; }
+    .humidity-comparison { display: grid; gap: .75rem; }
+    .humidity-row { display: grid; grid-template-columns: 3.5rem minmax(3rem, 1fr) auto; gap: .75rem; align-items: center; font-size: .78rem; }
+    .humidity-label { color: var(--muted); }
+    .humidity-track { height: .55rem; overflow: hidden; border-radius: 99px; background: #0e1720; }
+    .humidity-bar { height: 100%; min-width: 2px; border-radius: inherit; background: #e6c77f; }
+    .humidity-row.outdoor .humidity-bar { background: #80b7c5; }
+    .humidity-value { font-weight: 600; white-space: nowrap; }
+    .humidity-difference { margin: 1rem 0 0; color: var(--muted); font-size: .74rem; }
+    .hero { display: flex; flex-direction: column; justify-content: center; gap: 1rem; padding: 1.25rem; }
+    .hero-copy { display: flex; align-items: center; gap: .9rem; }
+    .signal { flex: 0 0 auto; width: 2.5rem; aspect-ratio: 1; border-radius: 50%; background: var(--status-color); box-shadow: 0 0 0 .35rem color-mix(in srgb, var(--status-color) 14%, transparent); }
+    .status-word { margin: 0; color: var(--status-color); font-size: 1.65rem; line-height: 1.1; }
+    .status-detail { margin: .5rem 0 0; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+    .delta { padding-top: .8rem; border-top: 1px solid var(--line); }
+    .delta-label { margin-bottom: .35rem; color: var(--muted); font-size: .66rem; text-transform: uppercase; }
+    .delta-value { margin: 0; font-size: 1.8rem; line-height: 1; }
     .notice { display: none; margin: 0 0 1rem; padding: .85rem 1rem; border-left: 3px solid var(--amber); color: #f1d39c; background: #362c20; font-size: .8rem; }
     .notice.visible { display: block; }
     .panels { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
@@ -58,8 +76,8 @@
     @media (max-width: 620px) {
       main { width: min(100% - 1rem, 38rem); padding-top: 1rem; }
       header { display: block; } .updated { margin-top: .8rem; }
-      .hero { grid-template-columns: 1fr; gap: 1.4rem; }
-      .delta { padding: 1rem 0 0; border-top: 1px solid var(--line); border-left: 0; }
+      .overview { grid-template-columns: 1fr; }
+      .hero { gap: .85rem; }
       .panels { grid-template-columns: 1fr; }
     }
   </style>
@@ -67,9 +85,18 @@
 <body>
   <main>
     <header><div><p class="eyebrow">Private weather station / decision aid</p><h1>Schimmel-Ampel</h1></div><p id="updated" class="updated">Lade Messdaten ...</p></header>
-    <section class="hero" aria-live="polite"><div class="hero-copy"><div id="signal" class="signal" aria-hidden="true"></div><div><p id="status-word" class="status-word">Wird geladen</p><p id="status-detail" class="status-detail">Schimmelrisiko wird berechnet.</p></div></div><div class="delta"><p class="delta-label">Wandtemperatur − Taupunkt innen</p><p id="delta-value" class="delta-value">--.- °C</p></div></section>
+    <section class="overview" aria-label="Aktuelle Empfehlungen">
+      <section class="ventilation-card" aria-live="polite">
+        <div class="ventilation-heading"><div><p class="eyebrow">Raumklima</p><h2>Lüftungsempfehlung</h2></div><p>Vergleich absolute Feuchte</p></div>
+        <div id="ventilation"></div>
+      </section>
+      <section class="hero" aria-live="polite" aria-label="Schimmelampel">
+        <div class="hero-copy"><div id="signal" class="signal" aria-hidden="true"></div><div><p class="eyebrow">Schimmelampel</p><p id="status-word" class="status-word">Wird geladen</p></div></div>
+        <p id="status-detail" class="status-detail">Schimmelrisiko wird berechnet.</p>
+        <div class="delta"><p class="delta-label">Wandtemperatur − Taupunkt innen</p><p id="delta-value" class="delta-value">--.- °C</p></div>
+      </section>
+    </section>
     <p id="notice" class="notice"></p>
-    <section class="chart-panel" aria-live="polite"><div class="chart-header"><h2>Lüftungsempfehlung</h2><p>Basierend auf absoluter Feuchte</p></div><div id="ventilation"></div></section>
     <section id="panels" class="panels" aria-live="polite"></section>
     <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><div id="chart-sensor-select" class="sensor-select"></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte ausgewählter Sensoren"></svg><div id="legend" class="legend"></div></section>
     <footer id="footer">Datenquelle: Ecowitt Cloud · Aktualisierung etwa alle 30 Minuten</footer>
@@ -108,7 +135,16 @@
         ? "Die Außenluft ist trockener als drinnen – jetzt 5–10 Minuten stoßlüften senkt die Luftfeuchtigkeit spürbar."
         : "Innen- und Außenluft enthalten ähnlich viel Feuchtigkeit. Fenster geschlossen lassen und später erneut prüfen.";
       const dryWarning = dryAir?.active ? `<p class="sensor-state warning">Außenluft ist sehr trocken (${valueWithUnit(dryAir.outdoor_absolute_humidity_g_m3, "g/m³")}) – nur kurz lüften (ca. 5 Minuten), sonst wird die Raumluft zu trocken.</p>` : "";
-      return `<p class="sensor-state ${recommended ? "" : "warning"}">${word}</p><p class="status-detail">${detail}</p><dl><dt>Absolute Feuchte innen</dt><dd>${valueWithUnit(ventilation.indoor_absolute_humidity_g_m3, "g/m³")}</dd><dt>Absolute Feuchte außen</dt><dd>${valueWithUnit(ventilation.outdoor_absolute_humidity_g_m3, "g/m³")}</dd></dl>${dryWarning}`;
+      const indoor = ventilation.indoor_absolute_humidity_g_m3;
+      const outdoor = ventilation.outdoor_absolute_humidity_g_m3;
+      const validIndoor = Number.isFinite(indoor) && indoor >= 0;
+      const validOutdoor = Number.isFinite(outdoor) && outdoor >= 0;
+      const maxHumidity = Math.max(validIndoor ? indoor : 0, validOutdoor ? outdoor : 0, 1);
+      const bar = (value, valid) => valid ? `width:${Math.max(value / maxHumidity * 100, 1).toFixed(1)}%` : "width:0";
+      const difference = validIndoor && validOutdoor
+        ? `<p class="humidity-difference">${indoor > outdoor ? `Innen ${valueWithUnit(indoor - outdoor, "g/m³")} feuchter als draußen` : outdoor > indoor ? `Draußen ${valueWithUnit(outdoor - indoor, "g/m³")} feuchter als innen` : "Innen und draußen gleich feucht"}</p>`
+        : "";
+      return `<p class="ventilation-state ${recommended ? "" : "warning"}">${word}</p><p class="ventilation-detail">${detail}</p><div class="humidity-comparison" aria-label="Vergleich der absoluten Luftfeuchte"><div class="humidity-row"><span class="humidity-label">Innen</span><div class="humidity-track"><div class="humidity-bar" style="${bar(indoor, validIndoor)}"></div></div><span class="humidity-value">${valueWithUnit(indoor, "g/m³")}</span></div><div class="humidity-row outdoor"><span class="humidity-label">Außen</span><div class="humidity-track"><div class="humidity-bar" style="${bar(outdoor, validOutdoor)}"></div></div><span class="humidity-value">${valueWithUnit(outdoor, "g/m³")}</span></div></div>${difference}${dryWarning}`;
     }
     function renderPanel(sensor, label) {
       if (!sensor) return `<article class="panel"><p class="panel-label">${label}</p><h2>Kein Sensor</h2><p class="sensor-state warning">Nicht konfiguriert</p></article>`;
