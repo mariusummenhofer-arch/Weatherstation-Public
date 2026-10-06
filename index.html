@@ -99,12 +99,13 @@
     <p id="notice" class="notice"></p>
     <section id="panels" class="panels" aria-live="polite"></section>
     <section class="chart-panel"><div class="chart-header"><h2>Taupunkt-Verlauf</h2><p>heutige Messpunkte</p></div><div id="chart-sensor-select" class="sensor-select"></div><svg id="chart" viewBox="0 0 760 250" role="img" aria-label="Verlauf der Taupunkte ausgewählter Sensoren"></svg><div id="legend" class="legend"></div></section>
-    <footer id="footer">Datenquelle: Ecowitt Cloud · Aktualisierung etwa alle 30 Minuten</footer>
+    <footer id="footer">Datenquelle: Ecowitt Cloud · Datenabruf geplant alle 15 Minuten, Anzeige prüft alle 5 Minuten</footer>
   </main>
   <script>
     const ROLE_LABELS = { indoor: "Innen", outdoor: "Außen", room: "Raum" };
     const CHART_PALETTE = ["#e6c77f", "#80b7c5", "#a5d6a7", "#f28b82", "#c792ea", "#90caf9"];
     const COLORS = { green: "var(--green)", amber: "var(--amber)", red: "var(--red)" };
+    const STALE_AFTER_MINUTES = 30;
     let selectedChartKeys = new Set();
     let lastArchiveMeasurements = [];
     let lastSensorNameByKey = {};
@@ -152,7 +153,9 @@
       const soilMoisture = sensor.soil_moisture_percent == null ? "" : `<dt>Bodenfeuchte</dt><dd>${valueWithUnit(sensor.soil_moisture_percent, "%")}</dd>`;
       const airPressure = sensor.air_pressure_hpa == null ? "" : `<dt>Luftdruck</dt><dd>${valueWithUnit(sensor.air_pressure_hpa, "hPa")}</dd>`;
       const absoluteHumidity = sensor.absolute_humidity_g_m3 == null ? "" : `<dt>Absolute Feuchte</dt><dd>${valueWithUnit(sensor.absolute_humidity_g_m3, "g/m³")}</dd>`;
-      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(sensor.name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}${airPressure}${absoluteHumidity}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd><dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd></dl></article>`;
+      const battery = ["indoor", "outdoor"].includes(sensor.role) ? "" : `<dt>Batterie</dt><dd>${valueWithUnit(sensor.battery_percent, "%")}</dd>`;
+      const name = sensor.role === "outdoor" ? "Außensensor" : sensor.name;
+      return `<article class="panel"><p class="panel-label">${label}</p><h2>${escapeHtml(name)}</h2><p class="sensor-state ${healthy ? "" : "warning"}">${healthy ? "Messung erfolgreich" : `Status: ${escapeHtml(sensor.status)} (${escapeHtml(sensor.error_code || "unbekannt")})`}</p><dl><dt>Temperatur</dt><dd>${valueWithUnit(sensor.temperature_c, "°C")}</dd><dt>Relative Feuchte</dt><dd>${valueWithUnit(sensor.relative_humidity_percent, "%")}</dd>${soilMoisture}${airPressure}${absoluteHumidity}<dt>Taupunkt</dt><dd>${valueWithUnit(sensor.dew_point_c, "°C")}</dd>${battery}</dl></article>`;
     }
     function renderSensorSelect(sensors) {
       document.querySelector("#chart-sensor-select").innerHTML = sensors.map(sensor => `<label class="sensor-toggle"><input type="checkbox" value="${escapeHtml(sensor.key)}" ${selectedChartKeys.has(sensor.key) ? "checked" : ""} onchange="toggleChartSensor(this)">${escapeHtml(sensor.name)}</label>`).join("");
@@ -207,7 +210,7 @@
         document.documentElement.style.setProperty("--status-color", COLORS.amber); document.querySelector("#status-word").textContent = "Keine Ampel"; document.querySelector("#status-detail").textContent = "Für die Schimmel-Ampel fehlen gültige Innen- oder Außenwerte."; document.querySelector("#delta-value").textContent = "--.- °C"; notice.textContent = "Die Schimmel-Ampel ist wegen fehlender oder fehlerhafter Messwerte nicht verfügbar."; notice.classList.add("visible");
       }
       document.querySelector("#ventilation").innerHTML = renderVentilation(current.indicators);
-      if (ageMinutes > 60) { notice.textContent = `Die Daten sind ${Math.round(ageMinutes)} Minuten alt.`; notice.classList.add("visible"); }
+      if (ageMinutes > STALE_AFTER_MINUTES) { notice.textContent = `Die Daten sind ${Math.round(ageMinutes)} Minuten alt.`; notice.classList.add("visible"); }
       const today = new Date(current.measured_at).toISOString().slice(0, 10);
       let archive = { measurements: [] };
       try { const archiveResponse = await fetch(`data/archive/${today}.json?${Date.now()}`); if (archiveResponse.ok) archive = await archiveResponse.json(); } catch (error) { /* current data remains useful without history */ }
@@ -217,7 +220,11 @@
       renderSensorSelect(current.sensors);
       drawChart(lastArchiveMeasurements, [...selectedChartKeys], lastSensorNameByKey);
     }
-    loadWeather().catch(error => { const notice = document.querySelector("#notice"); notice.textContent = `Messdaten konnten nicht geladen werden: ${error.message}`; notice.classList.add("visible"); });
+    function refreshWeather() {
+      loadWeather().catch(error => { const notice = document.querySelector("#notice"); notice.textContent = `Messdaten konnten nicht geladen werden: ${error.message}`; notice.classList.add("visible"); });
+    }
+    refreshWeather();
+    setInterval(refreshWeather, 5 * 60 * 1000);
   </script>
 </body>
 </html>
